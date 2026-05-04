@@ -1,0 +1,26 @@
+@using BlazorAppXyci6.Components.Models
+
+<div class="ingredient-card @(Ingredient.IsSelected ? "selected" : "")" @onclick="Toggle">
+    @* Заменили картинку на отображение эмодзи из модели *@
+    <div class="ingredient-emoji">@Ingredient.Emoji</div>
+    
+    <div class="info">
+        <span class="name">@Ingredient.Name</span>
+        <span class="price">+ @Ingredient.Price ₽</span>
+    </div>
+    
+    @* Чекбокс для визуального подтверждения *@
+    <input type="checkbox" @bind="Ingredient.IsSelected" @onclick:stopPropagation />
+</div>
+
+@code {
+    [Parameter] public PizzaIngredient Ingredient { get; set; } = new();
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task Toggle()
+    {
+        Ingredient.IsSelected = !Ingredient.IsSelected;
+        // Уведомляем родителя (Home.razor), что цена изменилась
+        await OnChanged.InvokeAsync();
+    }
+}

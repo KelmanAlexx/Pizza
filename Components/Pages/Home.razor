@@ -1,0 +1,142 @@
+﻿@page "/"
+@using BlazorAppXyci6.Components.Models
+@using BlazorAppXyci6.Components.Components
+@rendermode InteractiveServer
+
+<PageTitle>Конструктор Пиццы</PageTitle>
+
+<div class="container mt-4 pb-5">
+    <h1 class="mb-4">🍕 Собери свою пиццу</h1>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-danger" role="status"></div>
+            <span class="ms-3">Загружаем ингредиенты...</span>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <section class="mb-4">
+                    <h3>1. Выберите тесто</h3>
+                    <select @bind="basePrice" class="form-select form-select-lg">
+                        <option value="400">Тонкое (25 см) — 400 ₽</option>
+                        <option value="550">Традиционное (30 см) — 550 ₽</option>
+                        <option value="750">Пышное (35 см) — 750 ₽</option>
+                    </select>
+                </section>
+
+                <section>
+                    <h3>2. Добавьте топпинги</h3>
+                    <div class="topping-grid">
+                        @foreach (var item in toppings)
+                        {
+                            <IngredientCard Ingredient="item" OnChanged="StateHasChanged" />
+                        }
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-body">
+                        <h4 class="card-title">Ваш заказ</h4>
+                        <hr />
+                        <ul class="list-unstyled">
+                            <li>Основа: @basePrice ₽</li>
+                            @foreach (var item in toppings.Where(t => t.IsSelected))
+                            {
+                                <li class="d-flex justify-content-between">
+                                    <small>@item.Name</small>
+                                    <small>+@item.Price ₽</small>
+                                </li>
+                            }
+                        </ul>
+                        <hr />
+                        <h3 class="text-danger">Итого: @TotalPrice ₽</h3>
+                        <button class="btn btn-success btn-lg w-100 mt-3" 
+                                @onclick="PlaceOrder">
+                            Заказать
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Окно подтверждения заказа *@
+@if (showModal)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-body">
+                    <h1 style="font-size: 4rem;">🎉</h1>
+                    <h2 class="text-success">Пицца заказана!</h2>
+                    <p class="lead">Ваш номер заказа: <strong>#@orderNumber</strong></p>
+                    <p class="text-muted">Сумма к оплате: @TotalPrice ₽</p>
+                    <button class="btn btn-primary btn-lg w-100 mt-3" @onclick="CloseModal">Отлично!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showModal = false;
+    private int orderNumber;
+    private decimal basePrice = 550;
+    private List<PizzaIngredient> toppings = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await Task.Delay(1500); 
+        
+        toppings = new List<PizzaIngredient>
+        {
+            new() { Name = "Пепперони", Price = 80, Emoji = "🍕" },
+            new() { Name = "Ветчина", Price = 90, Emoji = "🍖" },
+            new() { Name = "Бекон", Price = 100, Emoji = "🥓" },
+            new() { Name = "Курица", Price = 95, Emoji = "🍗" },
+            new() { Name = "Колбаски", Price = 110, Emoji = "🌭" },
+            new() { Name = "Шампиньоны", Price = 50, Emoji = "🍄" },
+            new() { Name = "Маслины", Price = 40, Emoji = "🫒" },
+            new() { Name = "Томаты", Price = 45, Emoji = "🍅" },
+            new() { Name = "Красный лук", Price = 30, Emoji = "🧅" },
+            new() { Name = "Болгарский перец", Price = 55, Emoji = "🫑" },
+            new() { Name = "Халапеньо", Price = 60, Emoji = "🌶️" },
+            new() { Name = "Сырный бортик", Price = 120, Emoji = "🧀" },
+            new() { Name = "Моцарелла", Price = 85, Emoji = "⚪" },
+            new() { Name = "Пармезан", Price = 95, Emoji = "🧀" },
+            new() { Name = "Ананасы", Price = 70, Emoji = "🍍" },
+            new() { Name = "Огурчики", Price = 50, Emoji = "🥒" }
+        };
+
+        isLoading = false;
+    }
+
+    private decimal TotalPrice => basePrice + toppings.Where(x => x.IsSelected).Sum(x => x.Price);
+
+    private void PlaceOrder()
+    {
+        orderNumber = new Random().Next(100, 1000);
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        basePrice = 550;
+        foreach (var item in toppings)
+        {
+            item.IsSelected = false;
+        }
+        
+        showModal = false;
+    }
+}
